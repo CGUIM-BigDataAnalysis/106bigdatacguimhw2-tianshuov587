@@ -1,0 +1,10 @@
+"0","ggplot()+geom_bar(data=result1,aes(x=country,y=n),
+                  stat = ""identity"")
+"
+"2","Warning message:
+"
+"2","In strsplit(code, ""\n"", fixed = TRUE) :"
+"2","
+ "
+"2"," input string 1 is invalid in this locale
+"

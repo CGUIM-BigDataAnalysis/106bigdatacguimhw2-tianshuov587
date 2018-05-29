@@ -1,0 +1,231 @@
+---
+title: "106-2 大數據分析方法 作業二"
+output: github_document
+author: SHUO TIAN
+---
+
+作業完整說明[連結](https://docs.google.com/document/d/1aLGSsGXhgOVgwzSg9JdaNz2qGPQJSoupDAQownkGf_I/edit?usp=sharing)
+
+學習再也不限定在自己出生的國家，台灣每年有許多學生選擇就讀國外的大專院校，同時也有人多國外的學生來台灣就讀，透過分析[大專校院境外學生人數統計](https://data.gov.tw/dataset/6289)、[大專校院本國學生出國進修交流數](https://data.gov.tw/dataset/24730)、[世界各主要國家之我國留學生人數統計表](https://ws.moe.edu.tw/Download.ashx?u=C099358C81D4876CC7586B178A6BD6D5062C39FB76BDE7EC7685C1A3C0846BCDD2B4F4C2FE907C3E7E96F97D24487065577A728C59D4D9A4ECDFF432EA5A114C8B01E4AFECC637696DE4DAECA03BB417&n=4E402A02CE6F0B6C1B3C7E89FDA1FAD0B5DDFA6F3DA74E2DA06AE927F09433CFBC07A1910C169A1845D8EB78BD7D60D7414F74617F2A6B71DC86D17C9DA3781394EF5794EEA7363C&icon=..csv)可以了解103年以後各大專院校國際交流的情形。請同學分析以下議題，並以視覺化的方式呈現分析結果，呈現103年以後大專院校國際交流的情形。
+
+!!!!Interpretation:Because i can  import the second data by URL,so i have to import it by direct the loction which document exists on my local 
+PC.And i also do some modifications on execl after import.So when you load this codes,Please adjust the address' code in Line 29.I will also upload  the csv which i have modified to github.Thankyou!
+
+
+## 來台境外生分析
+### 資料匯入與處理
+```{r dataloadToTWN}
+library(readr)
+library(readODS)
+library(RCurl)
+data1031<-read_csv("http://stats.moe.gov.tw/files/detail/103/103_ab103_C.csv")
+data1032<-read_csv("http://stats.moe.gov.tw/files/detail/103/103_ab103_S.csv")
+data1041<-read_csv("http://stats.moe.gov.tw/files/detail/104/104_ab104_C.csv")
+data1042<-read_csv("http://stats.moe.gov.tw/files/detail/104/104_ab104_S.csv")
+data1051<-read_csv("http://stats.moe.gov.tw/files/detail/105/105_ab105_C.csv")
+data1052<-read_csv("http://stats.moe.gov.tw/files/detail/105/105_ab105_S.csv")
+data1061<-read_csv("http://stats.moe.gov.tw/files/detail/106/106_ab105_C.csv")
+data1062<-read_csv("http://stats.moe.gov.tw/files/detail/106/106_ab105_S.csv")
+data2 <- read_csv("ssyy.csv", 
+    locale = locale(encoding = "BIG5"))
+data3<-read_csv("https://ws.moe.edu.tw/Download.ashx?u=C099358C81D4876CC7586B178A6BD6D5062C39FB76BDE7EC7685C1A3C0846BCDD2B4F4C2FE907C3E7E96F97D24487065577A728C59D4D9A4ECDFF432EA5A114C8B01E4AFECC637696DE4DAECA03BB417&n=4E402A02CE6F0B6C1B3C7E89FDA1FAD0B5DDFA6F3DA74E2DA06AE927F09433CFBC07A1910C169A1845D8EB78BD7D60D7414F74617F2A6B71DC86D17C9DA3781394EF5794EEA7363C&icon=..csv")
+
+datatotal<-merge(data1031,data1041,by = colnames(data1031[2]))
+datatotal<-merge(datatotal,data1051,by=colnames(data1031[2]))
+datatotal<-merge(datatotal,data1061,by=colnames(data1031[2]))
+datatotal$洲別.y<-NULL
+datatotal$洲別.y<-NULL
+datatotal[,21]<-NULL
+datatotal2<-merge(data1032,data1042,by = colnames(data1032[2]))
+datatotal2<-merge(datatotal2,data1052,by=colnames(data1032[2]))
+datatotal2<-merge(datatotal2,data1062,by=colnames(data1032[2]))
+datatotal2[,c(10,13,14,21,24,25,35,36)]<-NULL
+
+#這是R Code Chunk
+```
+
+### 哪些國家來台灣唸書的學生最多呢？ 
+```{r ToTWNCountry}
+a<-datatotal
+
+for(q in 1:139){
+  answer<-0
+  for(w in 3 :38){
+    answer<-answer+a[q,w]}
+  a[q,39]<-answer
+}
+b<-datatotal2
+for(q in 1:144){
+  answer<-0
+  for(w in 4 :37){
+    answer<-answer+b[q,w]}
+  b[q,38]<-answer
+}
+
+library(dplyr)
+a<-arrange(a,desc(V39))
+b<-arrange(b,desc(V38))  
+
+#這是R Code Chunk
+library(knitr)
+knitr::kable(head(a,10))
+
+
+```
+
+### 哪間大學的境外生最多呢？
+```{r ToTWNUniversity}
+knitr::kable(head(b,10))
+#這是R Code Chunk
+```
+
+### 各個國家來台灣唸書的學生人數條狀圖
+```{r ToTWNCountryBar}
+a$國別<-as.factor(a$國別)
+library(ggplot2)
+ggplot()+geom_bar(data=a,aes(x=國別,y=V39),
+                  stat = "identity")
+#這是R Code Chunk
+```
+
+### 各個國家來台灣唸書的學生人數面量圖
+```{r ToTWNCountryMap}
+#這是R Code Chunk
+
+library(RJSONIO)
+library(choroplethr)
+library(ggplot2)
+a1<-data.frame(a$國別,a$V39)
+CountriesComparisionTable <- read_csv("C:/Users/tsv587/Desktop/CountriesComparisionTable.csv")
+country<-CountriesComparisionTable[,-1]
+colnames(a1)[1]<-"region"
+colnames(country)[1]<-"value"
+colnames(country)[2]<-"region"
+a1<-merge(country,a1,by="region")
+a1<-a1[,-1]
+colnames(a1)[1]<-"region"
+colnames(a1)[2]<-"value"
+
+
+a2<-group_by(a1,region)%>%
+  summarise(value=sum(value))
+
+country_choropleth(a2)
+
+
+
+```
+
+## 台灣學生國際交流分析
+
+### 資料匯入與處理
+```{r dataloadFromTWN}
+library(dplyr)
+datause<-filter(data2,學年度>102)
+colnames(datause)[10]<-"country"
+
+colnames(datause)[11]<-"school"
+
+data5<-group_by(datause,school)%>%
+  summarise(n=sum(小計))
+
+data4<-group_by(datause,country)%>%
+  summarise(n=sum(小計))
+
+result1<-arrange(data4,desc(n))
+result2<-arrange(data5,desc(n))
+
+
+
+#這是R Code Chunk
+```
+
+### 台灣大專院校的學生最喜歡去哪些國家進修交流呢？
+```{r FromTWNCountry}
+knitr::kable(head(result1,10))
+
+#這是R Code Chunk
+```
+
+### 哪間大學的出國交流學生數最多呢？
+```{r FromTWNUniversity}
+knitr::kable(head(result2,10))
+#這是R Code Chunk
+```
+
+### 台灣大專院校的學生最喜歡去哪些國家進修交流條狀圖
+```{r FromTWNCountryBar}
+
+result1$country<-as.factor(result1$country)
+library(ggplot2)
+ggplot()+geom_bar(data=result1,aes(x=country,y=n),
+                  stat = "identity")
+#這是R Code Chunk
+```
+
+### 台灣大專院校的學生最喜歡去哪些國家進修交流面量圖
+```{r FromTWNCountryMap}
+colnames(result1)[1]<-"region"
+colnames(result1)[2]<-"value"
+answer1<-merge(country,result1,by="region")
+answer1<-answer1[,-1]
+colnames(answer1)[1]<-"region"
+colnames(answer1)[2]<-"value"
+answer2<-group_by(answer1,region)%>%
+  summarise(value=sum(value))
+
+country_choropleth(answer2)
+
+#這是R Code Chunk
+```
+
+## 台灣學生出國留學分析
+
+### 資料匯入與處理
+```{r dataloadFromTWNAb}
+library(dplyr)
+a4<-data3
+colnames(a4)[2]<-"country"
+a5<-group_by(a4,country)%>%
+  summarise(n<-sum(總人數))
+colnames(a5)[2]<-"n"
+a5<-arrange(a5,desc(n))
+
+
+
+#這是R Code Chunk
+```
+
+### 台灣學生最喜歡去哪些國家留學呢？
+```{r FromTWNAb}
+knitr::kable(head(a5,10))
+#這是R Code Chunk
+```
+
+### 台灣學生最喜歡去哪些國家留學面量圖
+```{r FromTWNAbMap}
+colnames(a5)[1]<-"region"
+colnames(a5)[2]<-"value"
+a5<-merge(country,a5,by="region")
+a5<-a5[,-1]
+colnames(a5)[1]<-"region"
+colnames(a5)[2]<-"value"
+a6<-group_by(a5,region)%>%
+  summarise(value=sum(value))
+
+country_choropleth(a6)
+#這是R Code Chunk
+```
+
+## 綜合分析
+
+
+請問來台讀書與離台讀書的來源國與留學國趨勢是否相同(5分)？想來台灣唸書的境外生，他們的母國也有很多台籍生嗎？請圖文並茂說明你的觀察(10分)。
+
+
+
+
+I think the tendency is the same ,because you can find than the picture 1st and 2nd are quitely similar,these two pictures  respectively 
+show  the countries which Taiwanese students go abord for studying and which countries' students come to Taiwan for studying.
+You can find the Amercia,China ,Japan,SOuth korean,Austrlia,Canada,UK,Franch,Germany,Spinish  are all in dark color in both three pictures.
+These improve that the country which has lots of Taiwanese students alse has lots of native students go to Taiwan for study.
